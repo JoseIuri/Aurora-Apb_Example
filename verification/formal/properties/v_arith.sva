@@ -1,0 +1,21 @@
+module v_arith(
+    input logic pclk,
+		input logic presetn,
+		input logic[31:0] paddr,
+		input logic[31:0] pwdata,
+		input logic psel,
+		input logic pwrite,
+		input logic penable,
+		input logic pslverr,
+		input logic[31:0] prdata
+);
+
+  //Properties
+
+  // Assertion
+
+  //Cover
+
+
+
+endmodule

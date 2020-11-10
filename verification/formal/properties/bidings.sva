@@ -1,0 +1,12 @@
+bind arith
+  v_arith i_arith (
+  .pclk(pclk),
+		.presetn(presetn),
+		.paddr(paddr),
+		.pwdata(pwdata),
+		.psel(psel),
+		.pwrite(pwrite),
+		.penable(penable),
+		.pslverr(pslverr),
+		.prdata(prdata)
+);
