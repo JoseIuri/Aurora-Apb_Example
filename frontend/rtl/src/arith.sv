@@ -13,7 +13,8 @@ module arith (
 		input logic pwrite,
 		input logic penable,
 		output logic[31:0] prdata,
-		output logic pslverr
+		output logic pslverr,
+		output logic pready
     );
 
     

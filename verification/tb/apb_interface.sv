@@ -12,6 +12,7 @@ interface apb_interface (input pclk, presetn);
 	logic penable;
 	logic[31:0] prdata;
 	logic pslverr;
+	logic pready;
 	
 
     // modport port(

@@ -17,6 +17,7 @@ module arith_wrapper (
 		.penable(apb_if_if.penable) ,
 		.prdata(apb_if_if.prdata) ,
 		.pslverr(apb_if_if.pslverr) ,
+		.pready(apb_if_if.pready) ,
 		.pclk(pclk),
 		.presetn(presetn)
     );

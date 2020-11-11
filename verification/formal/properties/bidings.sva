@@ -8,5 +8,6 @@ bind arith
 		.pwrite(pwrite),
 		.penable(penable),
 		.pslverr(pslverr),
+		.pready(pready),
 		.prdata(prdata)
 );
