@@ -59,6 +59,14 @@ io=output
 connect=pslverr
 }
 
+signal{
+name=pready
+type=logic
+io=output
+connect=pready
+}
+
+
 clock{
 name=pclk
 period=90

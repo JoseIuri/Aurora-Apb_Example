@@ -46,6 +46,13 @@ connect=pslverr
 }
 
 signal{
+name=pready
+type=logic
+io=output
+connect=pready
+}
+
+signal{
 name=prdata
 type=logic [31:0]
 io=output
@@ -73,6 +80,7 @@ signal=pwrite
 signal=penable
 signal=prdata
 signal=pslverr
+signal=pready
 clock=pclk
 reset=presetn
 }
@@ -86,6 +94,7 @@ con=pwrite,pwrite
 con=penable,penable
 con=prdata,prdata
 con=pslverr,pslverr
+con=pready,pready
 instance=apb_if
 }
 
