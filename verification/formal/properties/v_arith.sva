@@ -1,21 +1,265 @@
 module v_arith(
     input logic pclk,
-		input logic presetn,
-		input logic[31:0] paddr,
-		input logic[31:0] pwdata,
-		input logic psel,
-		input logic pwrite,
-		input logic penable,
-		input logic pslverr,
-		input logic[31:0] prdata
+	input logic presetn,
+	input logic[31:0] paddr,
+	input logic[31:0] pwdata,
+	input logic psel,
+	input logic pwrite,
+	input logic penable,
+	input logic pslverr,
+	input logic[31:0] prdata,
+	input logic pready
 );
 
-  //Properties
+	//Properties 
 
-  // Assertion
+	// Checks for X or Z
 
-  //Cover
+	property apb_sel_valid_values_p;
+		@(posedge pclk) disable iff(!presetn)
+			$isunknown(psel) == 0;
+	endproperty
 
+	property apb_addr_valid_values_p;
+		@(posedge pclk) disable iff(!presetn)
+			$isunknown(paddr) == 0;
+	endproperty
 
+	property apb_write_valid_values_p;
+		@(posedge pclk) disable iff(!presetn)
+			$isunknown(pwrite) == 0;
+	endproperty
+
+	property apb_enable_valid_values_p;
+		@(posedge pclk) disable iff(!presetn)
+			$isunknown(penable) == 0;
+	endproperty
+
+	property apb_ready_valid_values_p;
+		@(posedge pclk) disable iff(!presetn)
+			$isunknown(pready) == 0;
+	endproperty
+
+	property apb_slverr_valid_values_p;
+		@(posedge pclk) disable iff(!presetn)
+			$isunknown(pslverr) == 0;
+	endproperty	
+
+	//Checks for reset values
+
+	property apb_sel_post_reset_p;
+		@(posedge pclk)
+			$rose(presetn) |->  $past(psel) == 0;
+	endproperty
+
+	property apb_enable_post_reset_p;
+		@(posedge pclk)
+			$rose(presetn) |-> $past(penable) == 0;
+	endproperty
+
+	property apb_slverr_post_reset_p;
+		@(posedge pclk)
+			$rose(presetn) |-> $past(pslverr) == 0;
+	endproperty
+
+	//PROTOCOL Checks
+
+	property apb_sel_validity_during_transfer_phases_p;
+		@(posedge penable) (psel);
+	endproperty
+
+	property apb_sel_stability_during_transfer_p;
+		@(posedge pclk) disable iff(!presetn)
+			penable |-> $stable(psel);
+	endproperty
+
+	property apb_sel_minimum_time_p; // Sel must be asserted for 2 cycles minimum
+		@(posedge pclk) disable iff(!presetn)
+			$rose(psel) |-> not(##1 $fell(psel));
+	endproperty
+
+	property apb_enable_fall_towards_sel_fall_p; // De-assert enable and sel together
+		@(posedge pclk) disable iff(!presetn)
+			$fell(psel) |-> $past(enable) == 1 && enable == 0;
+	endproperty
+
+	property apb_addr_stability_during_transfer_p; // Stability of ADDR during transfer
+		@(posedge pclk) disable iff(!presetn)
+			(psel) and penable |-> ($stable(paddr) and ##[1: $] $fell(penable));
+	endproperty
+
+	property apb_write_stability_during_transfer_p; //Stability of write during transfer
+		@(posedge pclk) disable iff(!presetn)
+			(psel) and penable |-> ($stable(pwrite) and ##[1: $] $fell(penable));
+	endproperty
+
+	property apb_wdata_stability_during_transfer_p; //Stability of wdata during transfer
+		@(posedge pclk) disable iff(!presetn)
+			(psel) and penable and pwrite |-> ($stable(pwdata) and ##[1: $] $fell(penable));
+	endproperty
+
+	property apb_enable_assertion_time_p; //Enable 1 cycle after sel
+		@(posedge pclk) disable iff(!presetn)
+			(psel) and !penable |=> (penable);
+	endproperty
+
+	property apb_enable_stability_during_ready_changes_p; //Stability of enable during ready
+		@(posedge pclk) disable iff(!presetn)
+			!pready and penable |=> penable;
+	endproperty
+
+	property apb_enable_value_between_transfers_p;
+		@(posedge pclk) disable iff(!presetn)
+			!(psel) |-> !penable;
+	endproperty
+
+	property apb_enable_deassertion_time_p; // De-assert after transfer
+		@(posedge pclk) disable iff(!presetn) 
+			(psel) and pready and penable |=> !penable;
+	endproperty
+
+	property  apb_ready_low_maximum_time_p; // Ready time
+		@(posedge pclk) disable iff(!presetn)
+			(psel) and $rose(penable) and !pready |-> ##[1:$] pready;
+	endproperty
+
+	property apb_rdata_stability_during_transfer_p; // Stability of RData during transfer
+		@(posedge pclk) disable iff(!presetn)
+			(!pwrite) and (psel) and penable and pready and (!pslverr) |-> not($changed(rdata));
+	endproperty
+
+	property apb_slverr_value_condition_p; //Checks stability of pslverr
+		@(posedge pclk) disable iff(!presetn)
+			!(psel) or !penable or !pready |-> !pslverr;
+	endproperty
+
+	property apb_slverr_assertion_time_p;  //Time for pslverr
+		@(posedge pclk) disable iff(!presetn)
+			$past(pslverr) == 0 and $rose(pslverr) |=> $fell(pslverr);
+	endproperty
+
+	property apb_slverr_illegal_read_addr_p; //Try to read from illegal adress
+		@(posedge pclk) disable iff(!presetn)
+			!pwrite and $past(pready) == 0 and $rose(pready) and paddr >= 16 |-> $rose(pslverr);
+	endproperty
+
+	property apb_slverr_illegal_write_addr_p; //Try to write in illegal adress
+		@(posedge pclk) disable iff(!presetn)
+			pwrite and $past(pready) == 0 and $rose(pready) and paddr >= 12 |-> $rose(pslverr);
+	endproperty
+
+	
+	//Asserions
+
+	APB_ILLEGAL_SEL_VALUE_ERR: assert property (apb_sel_valid_values_p);
+
+	APB_ILLEGAL_ADDR_VALUE_ERR: assert property (apb_addr_valid_values_p);
+
+	APB_ILLEGAL_WRITE_VALUE_ERR: assert property (apb_write_valid_values_p);
+
+	APB_ILLEGAL_ENABLE_VALUE_ERR: assert property (apb_enable_valid_values_p);
+
+	APB_ILLEGAL_READY_VALUE_ERR: assert property (apb_ready_valid_values_p);
+
+	APB_ILLEGAL_SLVERR_VALUE_ERR: assert property (apb_slverr_valid_values_p);
+
+	
+	APB_ILLEGAL_SEL_VALUE_POST_RESET_ERR: assert property (apb_sel_post_reset_p);
+
+	APB_ILLEGAL_ENABLE_VALUE_POST_RESET_ERR: assert property (apb_enable_post_reset_p);
+
+	APB_ILLEGAL_SLVERR_VALUE_POST_RESET_ERR: assert property (apb_slverr_post_reset_p);
+
+	
+	APB_ILLEGAL_SEL_TRANSITION_TR_PHASES_ERR: assert property (apb_sel_validity_during_transfer_phases_p);
+
+	APB_ILLEGAL_SEL_TRANSITION_DURING_TRANSFER_ERR: assert property (apb_sel_stability_during_transfer_p);
+
+	APB_ILLEGAL_SEL_MINIMUM_TIME_ERR: assert property(apb_sel_minimum_time_p);
+
+	APB_ILLEGAL_ENABLE_FALL_TOWARDS_SEL_FALL_ERR: assert property(apb_enable_fall_towards_sel_fall_p);
+
+	APB_ILLEGAL_ADDR_TRANSITION_DURING_TRANSFER_ERR: assert property (apb_addr_stability_during_transfer_p);
+
+	APB_ILLEGAL_WRITE_TRANSITION_DURING_TRANSFER_ERR: assert property (apb_write_stability_during_transfer_p);
+
+	APB_ILLEGAL_WDATA_TRANSITION_DURING_TRANSFER_ERR: assert property (apb_wdata_stability_during_transfer_p);
+
+	APB_ILLEGAL_ENABLE_ASSERTION_TIME_ERR: assert property (apb_enable_assertion_time_p);
+
+	APB_ILLEGAL_ENABLE_TRANSITION_DURING_READY_CHANGES_ERR: assert property (apb_enable_stability_during_ready_changes_p);
+
+	APB_ILLEGAL_ENABLE_VALUE_BETWEEN_TRANSFERS_ERR: assert property(apb_enable_value_between_transfers_p);
+
+	APB_ILLEGAL_ENABLE_DEASSERTION_TIME_ERR: assert property(apb_enable_deassertion_time_p);
+
+	APB_ILLEGAL_READY_MAXIMUM_LOW_TIME_ERR: assert property (apb_ready_low_maximum_time_p);
+
+	APB_ILLEGAL_RDATA_TRANSITION_DURING_TRANSFER_ERR: assert property (apb_rdata_stability_during_transfer_p);
+
+	APB_ILLEGAL_SLVERR_VALUE_CONDITION_ERR: assert property (apb_slverr_value_condition_p);
+
+	APB_ILLEGAL_SLVERR_ASSERTION_TIME_ERR: assert property(apb_slverr_assertion_time_p);
+
+	APB_ILLEGAL_SLVERR_READ_ERR: assert property(apb_slverr_illegal_read_addr_p);
+
+	APB_ILLEGAL_SLVERR_WRITE_ERR: assert property(apb_slverr_illegal_write_addr_p);
+
+	
+	// Cover
+
+	APB_ILLEGAL_SEL_VALUE_CVR: cover property (apb_sel_valid_values_p);
+
+	APB_ILLEGAL_ADDR_VALUE_CVR: cover property (apb_addr_valid_values_p);
+
+	APB_ILLEGAL_WRITE_VALUE_CVR: cover property (apb_write_valid_values_p);
+
+	APB_ILLEGAL_ENABLE_VALUE_CVR: cover property (apb_enable_valid_values_p);
+
+	APB_ILLEGAL_READY_VALUE_CVR: cover property (apb_ready_valid_values_p);
+
+	APB_ILLEGAL_SLVERR_VALUE_CVR: cover property (apb_slverr_valid_values_p);
+
+	
+	APB_ILLEGAL_SEL_VALUE_POST_RESET_CVR: cover property (apb_sel_post_reset_p);
+
+	APB_ILLEGAL_ENABLE_VALUE_POST_RESET_CVR: cover property (apb_enable_post_reset_p);
+
+	APB_ILLEGAL_SLVERR_VALUE_POST_RESET_CVR: cover property (apb_slverr_post_reset_p);
+
+	
+	APB_ILLEGAL_SEL_TRANSITION_TR_PHASES_CVR: cover property (apb_sel_validity_during_transfer_phases_p);
+
+	APB_ILLEGAL_SEL_TRANSITION_DURING_TRANSFER_CVR: cover property (apb_sel_stability_during_transfer_p);
+
+	APB_ILLEGAL_SEL_MINIMUM_TIME_CVR: cover property(apb_sel_minimum_time_p);
+
+	APB_ILLEGAL_ENABLE_FALL_TOWARDS_SEL_FALL_CVR: cover property(apb_enable_fall_towards_sel_fall_p);
+
+	APB_ILLEGAL_ADDR_TRANSITION_DURING_TRANSFER_CVR: cover property (apb_addr_stability_during_transfer_p);
+
+	APB_ILLEGAL_WRITE_TRANSITION_DURING_TRANSFER_CVR: cover property (apb_write_stability_during_transfer_p);
+
+	APB_ILLEGAL_WDATA_TRANSITION_DURING_TRANSFER_CVR: cover property (apb_wdata_stability_during_transfer_p);
+
+	APB_ILLEGAL_ENABLE_ASSERTION_TIME_CVR: cover property (apb_enable_assertion_time_p);
+
+	APB_ILLEGAL_ENABLE_TRANSITION_DURING_READY_CHANGES_CVR: cover property (apb_enable_stability_during_ready_changes_p);
+
+	APB_ILLEGAL_ENABLE_VALUE_BETWEEN_TRANSFERS_CVR: cover property(apb_enable_value_between_transfers_p);
+
+	APB_ILLEGAL_ENABLE_DEASSERTION_TIME_CVR: cover property(apb_enable_deassertion_time_p);
+
+	APB_ILLEGAL_READY_MAXIMUM_LOW_TIME_CVR: cover property (apb_ready_low_maximum_time_p);
+
+	APB_ILLEGAL_RDATA_TRANSITION_DURING_TRANSFER_CVR: cover property (apb_rdata_stability_during_transfer_p);
+
+	APB_ILLEGAL_SLVERR_VALUE_CONDITION_CVR: cover property (apb_slverr_value_condition_p);
+
+	APB_ILLEGAL_SLVERR_ASSERTION_TIME_CVR: cover property(apb_slverr_assertion_time_p);
+
+	APB_ILLEGAL_SLVERR_READ_CVR: cover property(apb_slverr_illegal_read_addr_p);
+
+	APB_ILLEGAL_SLVERR_WRITE_CVR: cover property(apb_slverr_illegal_write_addr_p);
 
 endmodule
