@@ -1,11 +1,11 @@
 # Analyze design under verification files
-set ROOT_PATH ../../../
+set ROOT_PATH ../../..
 set RTL_PATH ${ROOT_PATH}/frontend/rtl/src/
 set PROP_PATH ${ROOT_PATH}/verification/formal/properties
 
-set rtl_list [glob ../../rtl/src/*.sv]
+set rtl_list [glob ${RTL_PATH}/*.sv]
 
-analyze -verilog rtl_list
+analyze -sv ${rtl_list}
 
 # Analyze property files
 analyze -sva \
@@ -13,7 +13,7 @@ analyze -sva \
   ${PROP_PATH}/v_arith.sva
   
 # Elaborate design and properties
-elaborate -top top
+elaborate -top arith
 
 # Set up Clocks and Resets
 clock pclk

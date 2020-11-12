@@ -5,63 +5,56 @@ formal=true
 
 signal{
 name=paddr
-type=logic [31:0]
+type= [31:0]
 io=input
 connect=paddr
 }
 
 signal{
 name=pwdata
-type=logic [31:0]
+type= [31:0]
 io=input
 connect=pwdata
 }
 
 signal{
 name=psel
-type=logic
+type=
 io=input
 connect=psel
 }
 
 signal{
 name=pwrite
-type=logic
-io=input
-connect=pwrite
-}
-
-signal{
-name=pwrite
-type=logic
+type=
 io=input
 connect=pwrite
 }
 
 signal{
 name=penable
-type=logic
+type=
 io=input
 connect=penable
 }
 
 signal{
 name=prdata
-type=logic [31:0]
+type= reg [31:0]
 io=output
 connect=prdata
 }
 
 signal{
 name=pslverr
-type=logic
+type= reg
 io=output
 connect=pslverr
 }
 
 signal{
 name=pready
-type=logic
+type= reg
 io=output
 connect=pready
 }
