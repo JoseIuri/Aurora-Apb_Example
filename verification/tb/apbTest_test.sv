@@ -16,15 +16,17 @@ class apbTest_test extends uvm_test;
 
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-        env_h = arith_env::create("env_h", this);
+        env_h = arith_env::type_id::create("env_h", this);
 		
-        seq0 = apbSequence_sequence::create("seq0", this);
+        seq_0 = apbSequence_sequence::type_id::create("seq_0", this);
 		
     endfunction
 
     task run_phase(uvm_phase phase);
-        seq0.start(env_h.apb_agt.seqr);
-		
+        super.run_phase(phase);
+        phase.raise_objection(this);
+        seq_0.start(env_h.apb_agt.sqr);
+		phase.drop_objection(this);
     endtask: run_phase
 
 endclass:apbTest_test

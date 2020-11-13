@@ -31,7 +31,5 @@ class apb_coverage extends uvm_component;
 
   function void write(apb_transaction t);
     tr.copy(t);
-    transa = transa + 1;
-
   endfunction: write
 endclass : apb_coverage

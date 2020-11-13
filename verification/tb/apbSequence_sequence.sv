@@ -4,7 +4,7 @@
   ******************************************************************************
 **/
 class apbSequence_sequence extends uvm_sequence #(apb_transaction);
-    `uvm_object_utils(apbSequence_sequence_sequence)
+    `uvm_object_utils(apbSequence_sequence)
 
     function new(string name="apbSequence_sequence");
         super.new(name);
@@ -12,9 +12,13 @@ class apbSequence_sequence extends uvm_sequence #(apb_transaction);
 
     task body;
         apb_transaction tr;
-        tr = apb_transaction::type_id::create("tr");
-        start_item(tr);
-            assert(tr.randomize());
-        finish_item(tr);
+        // forever begin
+        for (int i = 0; i <= 20; i++) begin
+            tr = apb_transaction::type_id::create("tr");
+            start_item(tr);
+                assert(tr.randomize());
+            finish_item(tr);
+        end
+        // end
     endtask: body
 endclass

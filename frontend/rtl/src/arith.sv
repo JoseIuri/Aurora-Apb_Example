@@ -32,6 +32,11 @@ module arith (
 			prdata <= 32'd0;
 			pslverr <= 0;
 			pready <= 0;
+
+			reg_bank[0] <= 31'd0;
+			reg_bank[1] <= 31'd0;
+			reg_bank[2] <= 31'd0;
+			reg_bank[3] <= 31'd0;
 		end
 
 		else begin
@@ -46,6 +51,7 @@ module arith (
 					end
 					pslverr <= 0;
 					pready <= 0;
+					prdata <= prdata;
 				end
 			end
 			W_ENABLE: begin

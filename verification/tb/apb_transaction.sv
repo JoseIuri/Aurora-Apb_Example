@@ -5,11 +5,13 @@
 **/
 class apb_transaction extends uvm_sequence_item;
 
-    logic[31:0] data;
-	logic[31:0] addr;
-	logic rw;
+    rand logic[31:0] data;
+	rand logic[31:0] addr;
+	rand logic rw;
 	logic slverr;
-	
+
+    constraint addr_1_range { addr >= 'd0; 
+                              addr <= 'd23;}
 
     `uvm_object_utils_begin(apb_transaction)
         `uvm_field_int(data, UVM_ALL_ON|UVM_HEX)
@@ -24,6 +26,7 @@ class apb_transaction extends uvm_sequence_item;
     endfunction: new
 
     function string convert2string();
-        return $sformatf("{{ data, addr, rw, slverr}}", data, addr, rw, slverr);
+        return $sformatf("{ data: %h, addr %h, rw %h, slverr %h}", data, addr, rw, slverr);
     endfunction
+
 endclass: apb_transaction

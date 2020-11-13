@@ -23,15 +23,14 @@ class arith_scoreboard extends uvm_scoreboard;
 
   virtual function void build_phase(uvm_phase phase);
     super.build_phase(phase);
-    arithRfm_rfm = arithRefmod_refmod::create("arithRfm_rfm", this);
-		
-    arithComp = uvm_in_order_class_comparator #(apb_transaction)::create("arithComp", this);
+    arithRfm_rfm = arithRefmod_refmod::type_id::create("arithRfm_rfm", this);
+    arithComp = uvm_in_order_class_comparator#(apb_transaction)::type_id::create("arithComp", this);
 		
   endfunction
 
   virtual function void connect_phase(uvm_phase phase);
     super.connect_phase(phase);
-    apb_agt_to_arithRfm_rfm.connect(arithRfm_rfm.from_apb_agt);
+    apb_agt_to_arithRfm_rfm.connect(arithRfm_rfm.from_apb_agt.analysis_export);
 		apb_agt_to_arithComp.connect(arithComp.before_export);
 		arithRfm_rfm.arithRfm_to_arithComp.connect(arithComp.after_export);
 		

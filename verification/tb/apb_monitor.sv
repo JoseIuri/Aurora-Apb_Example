@@ -23,40 +23,58 @@ class apb_monitor extends uvm_monitor;
         super.new(name, parent);
         this.transCollected = apb_transaction::type_id::create("transCollected");
 
-        this.tID = get_type_name().toupper();
+        this.tID = get_type_name();
         this.req = new("req", this);
         this.resp = new("resp", this);
     endfunction: new
 
-    function build_phase(uvm_phase phase);
+    virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
         `uvm_info(tID, $sformatf("build_phase begin ..."), UVM_HIGH)
-        if (!(uvm_config_db#(virtual apb_interface)::get(this, "", "VIRTUAL_IF", |INTERFACE_INSTANCE|_vif))) begin
+        if (!(uvm_config_db#(virtual apb_interface)::get(this, "", "VIRTUAL_IF", apb_if_vif))) begin
             `uvm_fatal("NOVIF", {"virtual interface must be set for: ", get_full_name(), ".apb_if_vif"})
         end
-
     endfunction : build_phase
 
-    task run_phase(uvm_phase phase);
+    virtual task run_phase(uvm_phase phase);
+        super.run_phase(phase);
+        
         this.CollectTransactions(phase); // collector task
     endtask: run_phase
 
     task CollectTransactions(uvm_phase phase);
-
+        @(posedge apb_if_vif.presetn);
         forever begin
-            phase.raise_objection(this);
 
             this.BusToTransaction();
+            if (transCollected.rw) begin
+                this.resp.write(transCollected);
+                this.req.write(transCollected);
+            end
+            else
+                this.req.write(transCollected);
 
-            this.req.write(transCollected);
-            this.resp.write(transCollected);
-
-            phase.drop_objection(this);
         end
     endtask : CollectTransactions
 
-    function void BusToTransaction();
+    task BusToTransaction();
+        @(posedge apb_if_vif.pclk);
+
+        if (apb_if_vif.psel & apb_if_vif.penable & apb_if_vif.presetn) begin
+            
+            
+            wait (apb_if_vif.pready == 1'b1);
+            transCollected.addr = apb_if_vif.paddr;
+            transCollected.slverr = apb_if_vif.pslverr;
+
+            if (apb_if_vif.pwrite)
+                transCollected.data = apb_if_vif.pwdata;
+            else
+                transCollected.data = apb_if_vif.prdata;
+
+            transCollected.rw = ~apb_if_vif.pwrite;
+        end 
         
-    endfunction : BusToTransaction
+    endtask : BusToTransaction
 
 endclass: apb_monitor

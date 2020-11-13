@@ -19,9 +19,9 @@ class arith_env extends uvm_env;
 
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-        apb_agt = apb_agent::create("apb_agt", this);
+        apb_agt = apb_agent::type_id::create("apb_agt", this);
 		
-        arith_scb = arith_scoreboard::create("arith_scb", this);
+        arith_scb = arith_scoreboard::type_id::create("arith_scb", this);
 		
         
     endfunction

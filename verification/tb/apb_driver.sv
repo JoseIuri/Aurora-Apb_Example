@@ -25,7 +25,7 @@ endclass : apb_driver
 
 function apb_driver::new(string name="apb_driver", uvm_component parent=null);
     super.new(name, parent);
-    this.tID = get_type_name().toupper();
+    this.tID = get_type_name();
 endfunction : new
 
 //------------------------------------------------------------------------------
@@ -45,24 +45,70 @@ endfunction : build_phase
 // Get and process items
 //
 task apb_driver::run_phase(uvm_phase phase);
+    super.run_phase(phase);
     // INIT BLOCK
+    @(negedge apb_if_vif.presetn);
+    apb_if_vif.paddr <= 0;
+    apb_if_vif.pwrite <= 0;
+    apb_if_vif.psel <= 0;
+    apb_if_vif.pwdata = 0;
+    
+    @(posedge apb_if_vif.presetn);
     forever begin
         // Get the next data item from sequencer
         seq_item_port.get_next_item(req);
-        phase.raise_objection(this);
         // Execute the item
         this.DriveItem(req);
         seq_item_port.item_done();
-        phase.drop_objection(this);
     end
 endtask : run_phase
 
 //------------------------------------------------------------------------------
 // Drive sequence item
 //
+
 task apb_driver::DriveItem(apb_transaction item);
     // Add your logic here
+    @(posedge apb_if_vif.pclk);
 
-    
+    if(item.rw) begin
+        apb_if_vif.paddr <= item.addr;
+        apb_if_vif.pwrite <= 0;
+        apb_if_vif.psel <= 1;
+        
+        @(posedge apb_if_vif.pclk);
+
+        apb_if_vif.penable <= 1;
+        
+        wait(apb_if_vif.pready);
+        
+        item.data = apb_if_vif.prdata;
+        item.slverr = apb_if_vif.pslverr;
+
+        @(posedge apb_if_vif.pclk);
+
+        apb_if_vif.psel <= 0;
+        apb_if_vif.penable <= 0;
+    end
+    else begin
+        apb_if_vif.paddr <= item.addr;
+        apb_if_vif.pwrite <= 1;
+        apb_if_vif.psel <= 1;
+        apb_if_vif.pwdata = item.data;
+        
+        @(posedge apb_if_vif.pclk);
+         
+        apb_if_vif.penable <= 1;
+        
+        wait(apb_if_vif.pready);
+
+        item.slverr = apb_if_vif.pslverr;
+
+        @(posedge apb_if_vif.pclk);
+
+        apb_if_vif.psel <= 0;
+        apb_if_vif.penable <= 0;
+        
+    end
 
 endtask : DriveItem

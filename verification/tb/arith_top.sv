@@ -15,25 +15,31 @@ module top;
     localparam P_PRESETN = 3e12ns;
 	
     initial begin
-        presetn = 1;
-		
-        pclk = 0;
+
+        presetn <= 1;
+        pclk <= 0;
+
+        #(180);
+        presetn = 0; 
+        #(180) presetn = 1;
 		
     end
-    always #(P_PCLK/2) ~pclk;
+    always begin
+      #(P_PCLK/2) pclk = ~pclk;
+    end
 	
-    always 
-		#(P_PRESETN) presetn = 0; 
-		#(180) = 1;
-	end
+    always begin
+      #(P_PRESETN) presetn = 0; 
+      #(180) presetn = 1;
+    end
     apb_interface apb_if_if_top (
 		.pclk(pclk), .presetn(presetn)
 	);
 		
     arith_wrapper dut(
-        .apb_if_if_top (apb_if_if),
-		.pclk.(pclk),
-		.presetn.(presetn)
+      .apb_if_if(apb_if_if_top),
+      .pclk(pclk),
+      .presetn(presetn)
     );
     initial begin
         `ifdef XCELIUM

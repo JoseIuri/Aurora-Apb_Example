@@ -4,7 +4,7 @@
   ******************************************************************************
 **/
 class arithRefmod_refmod extends uvm_component;
-    `uvm_component_utils(arithRefmod_refmod_refmod)
+    `uvm_component_utils(arithRefmod_refmod)
 
     apb_transaction req_0;
 	
@@ -13,6 +13,8 @@ class arithRefmod_refmod extends uvm_component;
     uvm_tlm_analysis_fifo #(apb_transaction) from_apb_agt;
 	
     uvm_analysis_export #(apb_transaction) arithRfm_to_arithComp;
+
+    bit [31:0] reg_bank [3:0];
 	
 
     function new(string name = "arithRefmod_refmod_refmod", uvm_component parent);
@@ -24,22 +26,61 @@ class arithRefmod_refmod extends uvm_component;
 
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-        req_0 = new("req_0", this);
-		resp_0 = new("resp_0", this);
+        req_0 = new("req_0");
+		resp_0 = new("resp_0");
+
+        for (int i = 0; i<4; i++)
+            reg_bank[i] = 32'h0;
 		
     endfunction: build_phase
 
     virtual task run_phase(uvm_phase phase);
         super.run_phase(phase);
-        forever begin
-            refmod_task()
-        end
+        $display("RFM");
+        fork
+            forever begin
+                refmod_task();
+            end
+        join
     endtask: run_phase
 
     task refmod_task();
-        // Add your logic here
+        wait (!(from_apb_agt.is_empty()));
 
-        
+        req_0 = apb_transaction::type_id::create("req_0", this);
+
+        from_apb_agt.get(req_0);
+
+        if (req_0.rw) begin
+            resp_0.rw = 1;
+            resp_0.addr = req_0.addr;
+            if(req_0.addr < 'd16) begin
+                resp_0.data = reg_bank[req_0.addr/4];
+                resp_0.slverr = 0;
+            end
+            else begin
+                resp_0.data = 'b0;
+                resp_0.slverr = 1;
+            end
+
+            arithRfm_to_arithComp.write(resp_0);
+        end
+        else begin
+            if(req_0.addr < 'd12) begin
+                reg_bank[req_0.addr/4] = req_0.data;
+            end
+
+            if(req_0.addr < 'd12 && req_0.addr >= 'd8) begin
+                if (reg_bank[2][31]) begin
+                    if (reg_bank[2][0]) begin
+                        reg_bank[3] = reg_bank[2] + reg_bank[1];
+                    end
+                    else begin
+                        reg_bank[3] = reg_bank[2] * reg_bank[1];
+                    end
+                end
+            end
+        end
 
     endtask : refmod_task
 

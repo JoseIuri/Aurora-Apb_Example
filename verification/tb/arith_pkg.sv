@@ -3,15 +3,15 @@ package arith_pkg;
     import uvm_pkg::*;
     
 
-    `include "apb_coverage.sv"
-	`include "apb_driver.sv"
-	`include "apbSequence_sequence.sv"
-	`include "apb_transaction.sv"
-	`include "arith_scoreboard.sv"
-	`include "apbTest_test.sv"
-	`include "arith_env.sv"
-	`include "arithRefmod_refmod.sv"
-	`include "apb_agent.sv"
-	`include "apb_monitor.sv"
+	`include "../../tb/apb_transaction.sv"
+    `include "../../tb/apb_coverage.sv"
+	`include "../../tb/apb_driver.sv"
+	`include "../../tb/arithRefmod_refmod.sv"
+	`include "../../tb/arith_scoreboard.sv"
+	`include "../../tb/apb_monitor.sv"
+	`include "../../tb/apb_agent.sv"
+	`include "../../tb/arith_env.sv"
+	`include "../../tb/apbSequence_sequence.sv"
+	`include "../../tb/apbTest_test.sv"
 	
 endpackage

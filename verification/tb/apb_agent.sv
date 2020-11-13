@@ -80,13 +80,13 @@ endfunction
 //
 function void apb_agent::build_phase (uvm_phase phase);
     super.build_phase(phase);
-    if(!uvm_config_db #(apb_agentConfig)::get(this, "apb_agentConfig", cfg))begin
-        `uvm_error({MSGID,"Failed to get agent's config object: apb_agentConfig"})
-    end
+    // if(!uvm_config_db #(apb_agentConfig)::get(this, "apb_agentConfig", cfg))begin
+    //     `uvm_error(MSGID,"Failed to get agent's config object: apb_agentConfig")
+    // end
     // Monitor is always present
-    mon = apb_Monitor::type_id::create("mon", this);
+    mon = apb_monitor::type_id::create("mon", this);
     // Only build the driver and sequencer if active
-    if(cfg.isActive == UVM_ACTIVE)begin
+    if(cfg.isActive == 1)begin
         sqr = uvm_sequencer#(apb_transaction)::type_id::create("sqr", this);
         drv = apb_driver::type_id::create("drv", this);
     end
@@ -102,10 +102,10 @@ function void apb_agent::connect_phase (uvm_phase phase);
     mon.req.connect(ap_req);
     mon.resp.connect(ap_resp);
     // Only connect the driver and the sequencer if active
-    if(cfg.isActive == UVM_ACTIVE)
+    if(cfg.isActive == 1) begin
         drv.seq_item_port.connect(sqr.seq_item_export);
     end
     if(cfg.hasCoverage) begin
-        mon.ap_req.connect(m_coverage.collected_port);
+        mon.req.connect(cov.collected_port);
     end
 endfunction: connect_phase
